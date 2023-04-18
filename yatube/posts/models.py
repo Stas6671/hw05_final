@@ -1,6 +1,7 @@
 from django.db import models
 
 from django.contrib.auth import get_user_model
+from django.forms import ValidationError
 
 User = get_user_model()
 
@@ -44,7 +45,7 @@ class Post(models.Model):
     image = models.ImageField(
         'картинка',
         upload_to='posts/',
-        blank=True
+        blank=True,
     )
 
     class Meta:
@@ -87,6 +88,7 @@ class Comment(models.Model):
 
 
 class Follow(models.Model):
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -103,3 +105,11 @@ class Follow(models.Model):
     class Meta:
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+
+    def __str__(self):
+        return self.author
+
+    def clean(self):
+        if self.user == self.author:
+            raise ValidationError('Самоподписка недоступна.')
+        super(Follow, self).clean()

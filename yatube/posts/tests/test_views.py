@@ -10,6 +10,7 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from typing import List
 
+from ..forms import CommentForm
 from ..models import Group, Post, Comment, Follow
 from ..views import VARIABLE_NUM_POSTS
 
@@ -185,6 +186,8 @@ class PostContextViewsTests(TestCase):
         self.assertIn('post', response.context)
         self.assertIn('form', response.context)
         self.assertIn('comments', response.context)
+        self.assertIsInstance(response.context['form'], CommentForm)
+        self.assertIsNotNone(response.context.get('post').comments)
         self.assertEqual(response.context.get('post').author, self.post.author)
         self.assertEqual(response.context.get('post').text, self.post.text)
         self.assertEqual(response.context.get('post').group, self.post.group)
@@ -250,6 +253,9 @@ class PaginatorTest(TestCase):
         cls.user = User.objects.create(username='HasNoName')
         cls.authorized_client = Client()
         cls.authorized_client.force_login(cls.user)
+        cls.auth_client = Client()
+        cls.author = User.objects.create(username='Auth')
+        cls.auth_client.force_login(cls.author)
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='cats',
@@ -264,6 +270,10 @@ class PaginatorTest(TestCase):
                 )
             )
         Post.objects.bulk_create(list_of_posts)
+        Follow.objects.create(
+            user=cls.author,
+            author=cls.user,
+        )
 
     def test_index_first_page_contains_ten_records(self):
         cache.clear()
@@ -310,6 +320,22 @@ class PaginatorTest(TestCase):
         response = self.guest_client.get(
             reverse('posts:profile',
                     kwargs={'username': self.user}) + '?page=2')
+        self.assertEqual(
+            len(response.context['page_obj']),
+            VARIABLE_NUM_POSTS_ON_SECOND_PAGE
+        )
+
+    def test_follow_index_first_page_contains_ten_records(self):
+        cache.clear()
+        """Проверка количества постов на первой странице равно 10."""
+        response = self.auth_client.get(reverse('posts:follow_index'))
+        self.assertEqual(len(response.context['page_obj']), VARIABLE_NUM_POSTS)
+
+    def test_follow_index_second_page_contains_three_records(self):
+        """Проверка: на второй странице должно быть три поста."""
+        response = self.auth_client.get(
+            reverse('posts:follow_index') + '?page=2'
+        )
         self.assertEqual(
             len(response.context['page_obj']),
             VARIABLE_NUM_POSTS_ON_SECOND_PAGE
@@ -372,4 +398,27 @@ class PostFollowTest(TestCase):
         self.assertNotEqual(
             posts_before_creation,
             posts_after_creation
+        )
+
+    def test_follower_deleted_during_requests(self):
+        follower_before = Follow.objects.count()
+        self.authorized_client.get(
+            reverse('posts:profile_unfollow',
+                    kwargs={'username': self.author}))
+        follower_after = Follow.objects.count()
+        self.assertNotEqual(
+            follower_before,
+            follower_after
+        )
+
+    def test_follower_created_during_requests(self):
+        Follow.objects.all().delete()
+        follower_before = Follow.objects.count()
+        self.authorized_client.get(
+            reverse('posts:profile_follow',
+                    kwargs={'username': self.author}))
+        follower_after = Follow.objects.count()
+        self.assertNotEqual(
+            follower_before,
+            follower_after
         )

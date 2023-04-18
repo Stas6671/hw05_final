@@ -4,9 +4,12 @@
 
 <div class="container py-5"> 
 {% include 'includes/switcher.html' %}
+{% load cache %}
+{% cache 20 index_page request.user.username %}
   {% for post in page_obj %}
   {% include 'includes/post_template.html' with group_link=True %} 
   {% endfor %}
+{% endcache%}
 </div>
 {% include 'includes/paginator.html' %}
 {% endblock %}

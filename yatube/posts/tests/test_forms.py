@@ -66,16 +66,22 @@ class PostFormCreateEditTests(TestCase):
         self.authorized_client.post(
             reverse('posts:post_create'),
             data=post_content,
-            follow=True,
+            follow=True
         )
         posts_after_creation = Post.objects.count()
         post = Post.objects.all().first()
-
         self.assertEqual(post_content['text'], post.text)
         self.assertEqual(self.user, post.author)
         self.assertEqual(
             posts_before_creation + ONE_POST,
             posts_after_creation
+        )
+        self.assertTrue(
+            Post.objects.filter(
+                text='Тестовый пост',
+                group=None,
+                image='posts/small.gif'
+            ).exists()
         )
 
     def test_post_create_with_group(self):
@@ -236,6 +242,7 @@ class PostFormCreateEditTests(TestCase):
         comments_after_creation = Comment.objects.count()
         first_comment = Comment.objects.all().first()
 
+        self.assertEqual(created_post, first_comment.post)
         self.assertEqual(comment_content['text'], first_comment.text)
         self.assertEqual(self.user, first_comment.author)
         self.assertEqual(

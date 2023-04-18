@@ -2,4 +2,6 @@
 {% block title %}Custom 403{% endblock %}
 {% block content %}
     <h1>Custom 403</h1>
+    <p>У вас нет прав доступа к данной странице.</p>
+    <a href="{% url 'posts:index' %}">Идите на главную</a>
 {% endblock %}

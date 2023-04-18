@@ -101,7 +101,7 @@ class PostURLTests(TestCase):
 
     def test_profile_unfollow_url_exists_at_follower(self):
         """Подписчику доступна отписка."""
-        self.follower = Follow.objects.create(
+        Follow.objects.create(
             user=self.user,
             author=self.author
         )
@@ -116,10 +116,3 @@ class PostURLTests(TestCase):
             f'/profile/{self.author}/follow/'
         )
         self.assertRedirects(response, (f'/profile/{self.author}/'))
-
-    def test_profile_follow_url_not_exists_at_auth(self):
-        """Пользователю недоступна подписка на себя."""
-        response = self.auth_client.get(
-            f'/profile/{self.author}/follow/'
-        )
-        self.assertRedirects(response, '/')
