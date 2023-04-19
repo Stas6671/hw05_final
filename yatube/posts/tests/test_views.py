@@ -16,7 +16,7 @@ from ..views import VARIABLE_NUM_POSTS
 
 User = get_user_model()
 
-ONE_POST = 1
+CONSTANT_QUANTITATIVE_CHANGE = 1
 TEST_CREATE_NUM_POSTS = 13
 VARIABLE_NUM_POSTS_ON_SECOND_PAGE = 3
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -183,15 +183,45 @@ class PostContextViewsTests(TestCase):
             reverse('posts:post_detail',
                     kwargs={'post_id': self.post.id})
         )
-        self.assertIn('post', response.context)
-        self.assertIn('form', response.context)
-        self.assertIn('comments', response.context)
-        self.assertIsInstance(response.context['form'], CommentForm)
-        self.assertIsNotNone(response.context.get('post').comments)
-        self.assertEqual(response.context.get('post').author, self.post.author)
-        self.assertEqual(response.context.get('post').text, self.post.text)
-        self.assertEqual(response.context.get('post').group, self.post.group)
-        self.assertEqual(response.context.get('post').image, self.post.image)
+        self.assertIn(
+            'post', response.context
+        )
+        self.assertIn(
+            'form', response.context
+        )
+        self.assertIn(
+            'comments', response.context
+        )
+        self.assertIsInstance(
+            response.context['form'], CommentForm
+        )
+
+        first_object = response.context['comments'][0]
+        comments_text_0 = first_object.text
+        comments_post_0 = first_object.post
+        comments_author_0 = first_object.author
+
+        self.assertEqual(
+            comments_text_0, self.comments.text
+        )
+        self.assertEqual(
+            comments_post_0, self.comments.post
+        )
+        self.assertEqual(
+            comments_author_0, self.comments.author
+        )
+        self.assertEqual(
+            response.context.get('post').author, self.post.author
+        )
+        self.assertEqual(
+            response.context.get('post').text, self.post.text
+        )
+        self.assertEqual(
+            response.context.get('post').group, self.post.group
+        )
+        self.assertEqual(
+            response.context.get('post').image, self.post.image
+        )
 
     def test_post_create_show_correct_context(self):
         """Шаблон post_create сформирован с правильным контекстом."""
@@ -401,24 +431,33 @@ class PostFollowTest(TestCase):
         )
 
     def test_follower_deleted_during_requests(self):
+        """Проверка: подписчик может отписаться."""
         follower_before = Follow.objects.count()
         self.authorized_client.get(
             reverse('posts:profile_unfollow',
                     kwargs={'username': self.author}))
         follower_after = Follow.objects.count()
-        self.assertNotEqual(
-            follower_before,
+        self.assertEqual(
+            follower_before - CONSTANT_QUANTITATIVE_CHANGE,
             follower_after
         )
 
     def test_follower_created_during_requests(self):
-        Follow.objects.all().delete()
+        """Проверка: авторизованный пользователь может оформить подписку."""
         follower_before = Follow.objects.count()
         self.authorized_client.get(
             reverse('posts:profile_follow',
                     kwargs={'username': self.author}))
         follower_after = Follow.objects.count()
-        self.assertNotEqual(
-            follower_before,
+
+        self.assertEqual(
+            follower_before + CONSTANT_QUANTITATIVE_CHANGE,
             follower_after
+        )
+        last_follower = Follow.objects.all().last()
+        self.assertEqual(
+            last_follower.user, self.user
+        )
+        self.assertEqual(
+            last_follower.author, self.author
         )

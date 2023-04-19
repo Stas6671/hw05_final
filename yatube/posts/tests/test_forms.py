@@ -69,16 +69,14 @@ class PostFormCreateEditTests(TestCase):
             follow=True
         )
         posts_after_creation = Post.objects.count()
-        post = Post.objects.all().first()
-        self.assertEqual(post_content['text'], post.text)
-        self.assertEqual(self.user, post.author)
         self.assertEqual(
             posts_before_creation + ONE_POST,
             posts_after_creation
         )
         self.assertTrue(
             Post.objects.filter(
-                text='Тестовый пост',
+                author=self.user,
+                text=post_content['text'],
                 group=None,
                 image='posts/small.gif'
             ).exists()
