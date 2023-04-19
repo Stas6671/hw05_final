@@ -430,20 +430,9 @@ class PostFollowTest(TestCase):
             posts_after_creation
         )
 
-    def test_follower_deleted_during_requests(self):
-        """Проверка: подписчик может отписаться."""
-        follower_before = Follow.objects.count()
-        self.authorized_client.get(
-            reverse('posts:profile_unfollow',
-                    kwargs={'username': self.author}))
-        follower_after = Follow.objects.count()
-        self.assertEqual(
-            follower_before - CONSTANT_QUANTITATIVE_CHANGE,
-            follower_after
-        )
-
     def test_follower_created_during_requests(self):
         """Проверка: авторизованный пользователь может оформить подписку."""
+        Follow.objects.all().delete()
         follower_before = Follow.objects.count()
         self.authorized_client.get(
             reverse('posts:profile_follow',
@@ -460,4 +449,16 @@ class PostFollowTest(TestCase):
         )
         self.assertEqual(
             last_follower.author, self.author
+        )
+
+    def test_follower_deleted_during_requests(self):
+        """Проверка: подписчик может отписаться."""
+        follower_before = Follow.objects.count()
+        self.authorized_client.get(
+            reverse('posts:profile_unfollow',
+                    kwargs={'username': self.author}))
+        follower_after = Follow.objects.count()
+        self.assertEqual(
+            follower_before - CONSTANT_QUANTITATIVE_CHANGE,
+            follower_after
         )

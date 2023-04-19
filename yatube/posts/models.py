@@ -116,6 +116,6 @@ class Follow(models.Model):
         return self.author
 
     def clean(self):
+        super().clean()
         if self.user == self.author:
             raise ValidationError('Самоподписка недоступна.')
-        super(Follow, self).clean()
