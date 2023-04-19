@@ -41,8 +41,11 @@ class PostTemplateViewsTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.authorized_client = Client()
+        cls.auth_client = Client()
         cls.user = User.objects.create_user('Auth')
+        cls.author = User.objects.create_user('HasNoName')
         cls.authorized_client.force_login(cls.user)
+        cls.auth_client.force_login(cls.author)
 
         cls.group = Group.objects.create(
             title='Тестовая группа',

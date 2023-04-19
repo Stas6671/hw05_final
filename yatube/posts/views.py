@@ -141,7 +141,7 @@ def profile_follow(request, username):
             author=author
         )
     else:
-        return redirect('post:index')
+        return redirect('posts:index')
     return redirect('posts:profile', username=username)
 
 
